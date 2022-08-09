@@ -15,7 +15,7 @@ title: "Data & Decisions"
 description: "A Personal Blog of the Data Science Journey of Mine."
 
 # The subpath of your site, e.g. /blog, for generating urls.
-baseurl: ""
+baseurl: "https://bertugmirasyedi.github.io/datandecisions/"
 
 # The base hostname & protocol of your site for where absolute urls are needed.
 url: "https://scriptor-jekyll.netlify.com"
