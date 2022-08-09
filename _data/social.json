@@ -1,0 +1,23 @@
+{
+    "links": [{
+            "title": "Twitter",
+            "icon": "fa-twitter",
+            "url": "https://twitter.com/bertugmirasyedi"
+        },
+        {
+            "title": "GitHub",
+            "icon": "fa-github",
+            "url": "https://github.com/bertugmirasyedi"
+        },
+        {
+            "title": "LinkedIn",
+            "icon": "fa-linkedin",
+            "url": "https://www.linkedin.com/in/bertuğ-mirasyedi-80836811a/"
+        },
+        {
+            "title": "E-Mail",
+            "icon": "fa-envelope",
+            "url": "mailto:ber2mir@gmail.com"
+        }
+    ]
+}
