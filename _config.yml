@@ -63,8 +63,7 @@ kramdown:
   parse_block_html: false
   syntax_highlighter: rouge
   syntax_highlighter_opts:
-    default_lang: python
-    line_numbers: false
+    css_class: 'highlight'
 
 # Sass
 sass:
