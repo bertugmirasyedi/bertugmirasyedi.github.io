@@ -30,7 +30,7 @@ The way I will discover new music is through playlists. Using Spotify API, the s
 
  >A recommender system, or a recommendation system (sometimes replacing 'system' with a synonym such as platform or engine), is a subclass of information filtering system that provide suggestions for items that are most pertinent to a particular user. Typically, the suggestions refer to various decision-making processes, such as what product to purchase, what music to listen to, or what online news to read. Recommender systems are particularly useful when an individual needs to choose an item from a potentially overwhelming number of items that a service may offer. [^1]
 
-So basically, a recommender system uses past behaviour or tastes of people (**collaborative filtering**) or inherent features of things (**content-based**) to recommend new items for users. To give content-based recommendations, firstly, items in which we are interested recommending should have preselected and/or user generated properties. Secondly, users must rate enough of these items so that we can try to understand what properties each user favors. [Music Genome Project](https://www.pandora.com/about/mgp) of Pandora[^3] can be given as an example for this method. Content-based approaches has the advantage of relevancy. Provided the classification of items is done properly, content-based recommendations will almost always be relevant. However, the recommendations are also likely to be "too similar" to what the user has already liked; in other words less *serendipitous* and they omit the context[^2]. Let's say there are two books about the same subject and while one of them is supportive of the topic, other one is against. Content-based recommendation has no method to differentiate this aspect of items.
+So basically, a recommender system uses past behaviour or tastes of people (**collaborative filtering**) or inherent features of things (**content-based**) to recommend new items for users. To give content-based recommendations, firstly, items in which we are interested recommending should have preselected and/or user generated properties. Secondly, users must rate enough of these items so that we can try to understand what properties each user favors. [Music Genome Project](https://www.pandora.com/about/mgp) of Pandora[^3] can be given as an example for this method. Content-based approaches has the advantage of relevancy. Provided the classification of items is done properly, content-based recommendations will almost always be relevant. However, the recommendations are also likely to be "too similar" to what the user has already liked; in other words less *serendipitous* and they omit the context[^2]. Let's say there are two books about the same subject and while one of them is supportive of the topic, other one is against it. Content-based recommendation has no method to differentiate this aspect of items.
 
 <figure>
 <p align="center">
@@ -81,7 +81,7 @@ sp = spotipy.Spotify(auth_manager=auth_manager)
 
 `SpotifyOAuth` here is expecting two variables namely `SPOTIPY_CLIENT_ID` and `SPOTIPY_CLIENT_SECRET` to authenticate our client. I have added them as environment variables.
 
-The spotipy client is set and ready to access Spotify API. The script asks for an input as a query for seaching playlists. I have used genres as query, since they are most likely to have relevant songs in them. The aim is to find playlists with the most overlap with my "Liked Songs", with minimal search.
+The spotipy client is set and ready to access Spotify API. The script asks for an input as a query for searching playlists. I have used genres as query, since they are most likely to have relevant songs in them. The aim is to find playlists with the most overlap with my "Liked Songs", with minimal search.
 
 ```python
 query = input("Search for playlists: ")
@@ -97,7 +97,7 @@ for offset in range(0, (end_offset + 1), 50):
 
 The reason for the increment of 50 is due to Spotify API's restriction of the number of items that can be searched in one go to 50. Now we have `playlists` object as JSON response from the API.
 
-Next I will create `tracks_response` variable that will contain all songs IDs of the playlists.
+Next, I will create a `tracks_response` variable that will contain all songs IDs of the playlists.
 
 ```python
 tracks_response = list()
@@ -121,9 +121,9 @@ for page in range(len(playlists)):
             all_placeholders_together = dict(items = all_placeholders_together)
             tracks_response.append(all_placeholders_together)
 ```
-This part of the script basically goes through the `playlists` item by item and adds the song IDs to `tracks_response`. Since the API can reach only 100 items at once, the script checks for number of songs. If it is greater than 100, script adds the IDs by parts of 100 items.
+This part of the script basically goes through the `playlists` item by item and adds the song IDs to `tracks_response`. Since the API can reach only 100 items at once, the script checks for the number of songs. If it is greater than 100, script adds the IDs by parts of 100 items.
 
-Now we have a list object that has all of the songs IDs of each playlist. It is time to compare tracks of these playlists with my 'Liked Songs'. We will create `results` list and add a `True` for each match; otherwise a `False`.
+Now we have a list object that has all of the songs IDs of each playlist. It is time to compare the tracks of these playlists with my 'Liked Songs'. We will create a `results` list and add a `True` for each match; otherwise a `False`.
 
 ```python
 results = list()
@@ -149,7 +149,7 @@ for i in range(len(singleLayerTracksResponse)):
             tracklist_contains_songs.append(sp.current_user_saved_tracks_contains(singleLayerTracksResponse[i][offset:(offset + remainder)]))
     results.append(tracklist_contains_songs)
 ```
-There are two important points in this part of script. First of all, there could be local songs in these playlists and they don't have a unique song ID. Therefore, the script adds a [dummy song](https://www.youtube.com/watch?v=dQw4w9WgXcQ) in place of NoneType object which API can't handle. Second point, to reduce the load on the API and to reduce the chance of being rate limited, script checks the track overlap with 50 item batches. When I first wrote the script, it didn't utilize this and as a result was rate limited. This simple trick also *reduced the total runtime by 65%*.
+There are two important points in this part of the script. First of all, there could be local songs in these playlists and they don't have a unique song ID. Therefore, the script adds a [dummy song](https://www.youtube.com/watch?v=dQw4w9WgXcQ) in place of NoneType object, which the API can't handle. Second point, to reduce the load on the API and to reduce the chance of being rate limited, the script checks the track overlap with 50 item batches. When I first wrote the script, it didn't utilize this and as a result, it was rate limited. This simple trick also *reduced the total runtime by 65%*.
 
 Continuing, this part counts the number of `True`s and stores them in `songOverlaps`
 
@@ -165,7 +165,7 @@ for plist in range(len(results)):
     songOverlaps.append(songCounter)
 ```
 
-After that comes the sorting of playlists from the most overlapping to least and store their original indice in `mostOverlapPlaylists_indices`.
+After that comes the sorting of playlists from the most overlapping to least and storing their original indice in `mostOverlapPlaylists_indices`.
 
 ```python
 songOverlaps_original = songOverlaps.copy()
@@ -226,7 +226,7 @@ This graph shows *New Likes* and the *Number of Seed Playlists* in each experime
 </p>
 </figure>
 
-This figure, on the other hand, shows the *Total Number of Songs in Each Playlist* and our KPI or *Number of New Likes per Minute* which is calculated by dividing new likes to runtime.
+This figure, on the other hand, shows the *Total Number of Songs in Each Playlist* and our KPI or *Number of New Likes per Minute* which is calculated by dividing new likes by runtime.
 
 From both of the graphs, we can see that after 200 seed playlists, there are diminishing returns. New likes stays constant of and consequently, KPI decreases. One could argue that Experiment No. 2 has the highest KPI and therefore, it should be selected for the model. However, it generates low count of songs. I think a playlist with song count between 70 and 100 is better. Also greater seed has increased probability of finding more similar playlists.
 
@@ -234,7 +234,7 @@ From both of the graphs, we can see that after 200 seed playlists, there are dim
 
 I think this was great learning experience for me and turned out nicer that I at first expected. Even though it doesn't use any sophisticated algorithms, recommendations were mostly satisfying. It has to be said that the performance of my model depends a couple of variable, some of which I cannot control. For example, how much a user is invested in a genre is very important. If I have only 5 songs in my library for a target genre, my expectations would have to be low.
 
-There three main controlling variables that changes the outcome of playlists: **number of seed playlists**, **how many of the most overlapping playlists we take into consideration**, and **overlap threshold**. They control how many songs will be in the generated playlist and high overlap threshold tends to favor more popular songs obviously. I manually tinkered with them to make song count between 70 and 100 in my experiments but in the future maybe I can add an automation of this. **For now thanks for reading and see you next time!**
+There three main controlling variables that changes the outcome of playlists: **number of seed playlists**, **how many of the most overlapping playlists we take into consideration**, and **overlap threshold**. They control how many songs will be in the generated playlist and a high overlap threshold tends to favor more popular songs, obviously. I manually tinkered with them to make song count between 70 and 100 in my experiments but in the future maybe I can add an automation of this. **For now thanks for reading and see you next time!**
 
 ---
 ## References
