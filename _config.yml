@@ -59,6 +59,7 @@ permalink: /:title
 # Conversion
 markdown: kramdown
 kramdown:
+  input: GFM
   parse_block_html: false
   syntax_highlighter: rouge
   syntax_highlighter_opts:
