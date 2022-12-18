@@ -1,0 +1,32 @@
+{
+  "index.qmd": {
+    "index.html": "de40c107"
+  },
+  "posts/post-with-code/index.qmd": {
+    "index.html": "d8d0a777"
+  },
+  "posts/welcome/index.qmd": {
+    "index.html": "b262d45f"
+  },
+  "about.qmd": {
+    "about.html": "14438b70"
+  },
+  "posts/book-forecasting/index.qmd": {
+    "index.html": "c95f23be"
+  },
+  "posts/find-relevant-music/index.qmd": {
+    "index.html": "8e8bf8e5"
+  },
+  "posts/find-relevant-music/2020-01-05-find-relevant-music.md": {
+    "2020-01-05-find-relevant-music.html": "8c1f4aa3"
+  },
+  "posts/book-forecasting/book_sales_forecasting.qmd": {
+    "book_sales_forecasting.html": "3baf9c49"
+  },
+  "404.md": {
+    "404.html": "2c95eaae"
+  },
+  "posts/book-forecasting/book_sales_forecasting_deep_learning_part.qmd": {
+    "book_sales_forecasting_deep_learning_part.html": "3bdf326d"
+  }
+}

@@ -1,0 +1,644 @@
+---
+title: "Book Sales Forecasting: Comparison of Different Models Part 2"
+description: "Deep Learning Models"
+date: 2022-11-27
+image: "images/forecast.png"
+categories: [python, time series forecasting, tensorflow, optuna, hyperparameter tuning]
+execute: 
+  freeze: true
+jupyter: tensorflow-test
+highlight-style: breezedark
+toc: true
+number-sections: true
+---
+
+# Introduction
+
+This post is the continuation of the [book sales forecasting case](/posts/book-forecasting/book_sales_forecasting.html). In this second part we will create deep learning models and hyperparameter tuning according to the assumed business case on Part 1.
+    
+# Deep Learning
+
+Now we will create the forecasts with deep learning methods - LSTM and CNN. For these models we have to change feature and target DataFrames to Numpy arrays, and reshape features to 3 dimensional shape of (samples, timesteps, features). After creating a base model for both of them and comparing visually by plotting test features with forecasts, we will create our custom function in the next section and do hyperparameter tuning.
+
+## LSTM
+
+```{python}
+#| eval: true
+#| echo: false
+import matplotlib.pyplot as plt
+import pandas
+import seaborn as sns
+import numpy as np
+from statsmodels.tsa.forecasting.stl import STLForecast
+from statsmodels.tsa.arima.model import ARIMA
+
+# Setting plot style and size
+sns.set_style("darkgrid")
+plt.rc("figure", figsize=(10, 6))
+plt.rc("font", size=10)
+
+
+subset = pandas.read_csv("subset_sklearn.csv")
+subset = subset.drop(
+  columns=[
+    "Unnamed: 0",
+    "0",
+    "1",
+    "2",
+    "3",
+    "4",
+    "5",
+    "6"]
+)
+
+train_subset = subset[0:1095]
+test_subset = subset[1095:1461]
+
+# Define train/test features and targets
+train_targets = train_subset["num_sold"]
+train_features = train_subset.drop(columns="num_sold")
+test_targets = test_subset["num_sold"]
+test_features = test_subset.drop(columns="num_sold")
+
+# Create a function to plot both test data and forecast from the model to compare them visually.
+def plot_forecasts(y_true, y_pred, title="Forecasts", width=700, height=500):
+    import plotly.express as px
+
+    # Create a DataFrame to store both series
+    series = pandas.DataFrame()
+    series["Observed"] = y_true
+    series["Predicted"] = y_pred
+    
+    # Define plot attributes
+    fig = px.line(
+        series, 
+        width=width, 
+        height=height, 
+        title=title,
+        labels={
+            "value": "Sales",
+            "variable": ""
+        }
+    )
+    fig.show()
+```
+
+Firstly, we will create a simple network.
+
+```{python}
+#| code-fold: false
+#| code-summary: "Simple LSTM Network"
+#| echo: true
+#| eval: false
+import tensorflow as tf
+from tensorflow.keras import layers, Sequential
+
+# Disable logging
+tf.keras.utils.disable_interactive_logging()
+
+window_size = 7
+
+# Create train and test data for LSTM
+lstm_train_features = np.array(train_features)
+lstm_train_targets = np.array(train_targets)
+
+lstm_test_features = np.array(test_features)
+lstm_test_targets = np.array(test_targets)
+
+# Reshape train and test features suitable fo RNN
+lstm_train_features = lstm_train_features.reshape((lstm_train_features.shape[0], 1, lstm_train_features.shape[1]))
+
+lstm_test_features = lstm_test_features.reshape((lstm_test_features.shape[0], 1, lstm_test_features.shape[1]))
+
+# Implement LSTM
+lstm_model = Sequential()
+lstm_model.add(layers.LSTM(50, activation="relu"))
+lstm_model.add(layers.Dense(1))
+lstm_model.compile(loss="mape", optimizer="Adam")
+
+# Fit and Forecast
+lstm_model.fit(lstm_train_features, lstm_train_targets, 1, 5, verbose=0)
+lstm_forecast = lstm_model.predict(lstm_test_features)
+```
+
+```{python}
+#| echo: false
+#| eval: true
+#| warning: false
+#| cache: true
+import tensorflow as tf
+from tensorflow.keras import layers, Sequential
+
+# Disable logging
+tf.keras.utils.disable_interactive_logging()
+
+window_size = 7
+
+# Create train and test data for LSTM
+lstm_train_features = np.array(train_features)
+lstm_train_targets = np.array(train_targets)
+
+lstm_test_features = np.array(test_features)
+lstm_test_targets = np.array(test_targets)
+
+# Reshape train and test features suitable fo RNN
+lstm_train_features = lstm_train_features.reshape((lstm_train_features.shape[0], 1, lstm_train_features.shape[1]))
+
+lstm_test_features = lstm_test_features.reshape((lstm_test_features.shape[0], 1, lstm_test_features.shape[1]))
+
+# Implement LSTM
+lstm_model = Sequential()
+lstm_model.add(layers.LSTM(50, activation="relu"))
+lstm_model.add(layers.Dense(1))
+lstm_model.compile(loss="mape", optimizer="Adam")
+
+# Fit and Forecast
+lstm_model.fit(lstm_train_features, lstm_train_targets, 1, 5, verbose=0);
+lstm_forecast = lstm_model.predict(lstm_test_features)
+
+# Plot both test data and forecast from the model to compare them visually.
+plot_forecasts(lstm_test_targets, lstm_forecast, title="Simple LSTM Model Forecasts");
+```
+
+```{python}
+#| echo: false
+def mean_absolute_percentage_error(y_true, y_pred):
+  import numpy as np
+
+  ape = [abs(y_true[i] - y_pred[i])/y_true[i] for i in range(len(y_true))]
+  mape = np.mean(ape)
+  return mape
+
+def r2_score(y_true, y_pred):
+  import numpy as np
+  import math
+    
+  mean = np.mean(y_true)
+  ss_res = 0
+  ss_tot = 0
+  
+  for i in range(len(y_true)):
+    ss_res += math.pow((y_true[i] - y_pred[i]), 2)
+    ss_tot += math.pow((y_true[i] - mean), 2)
+    
+  score = 1 - (ss_res/ss_tot)
+  return score
+```
+
+For easier comparison we will compute the previous benchmarks again.
+
+```{python}
+#| code-fold: true
+#| code-summary: "LSTM Benchmark Scores"
+print(f"MAPE for LSTM model is: {mean_absolute_percentage_error(lstm_test_targets, lstm_forecast)}")
+print(f"R2 Score for LSTM model is: {r2_score(lstm_test_targets, lstm_forecast)}")
+```
+
+Now let's create a simple CNN network and plot its forecasts.
+
+## CNN
+
+```{python}
+#| code-fold: true
+#| code-summary: "Simple CNN Model"
+#| cache: true
+#| warning: false
+
+# Disable logging
+tf.keras.utils.disable_interactive_logging()
+
+# Create train and test data for CNN
+cnn_train_features = np.array(train_features)
+cnn_train_targets = np.array(train_targets)
+
+cnn_test_features = np.array(test_features)
+cnn_test_targets = np.array(test_targets)
+
+# Reshape train and test features suitable fo RNN
+cnn_train_features = cnn_train_features.reshape((cnn_train_features.shape[0], 1, cnn_train_features.shape[1]))
+cnn_test_features = cnn_test_features.reshape((cnn_test_features.shape[0], 1, cnn_test_features.shape[1]))
+
+# Implement CNN
+cnn_model = Sequential()
+cnn_model.add(layers.Conv1D(50, 1, activation="relu"))
+cnn_model.add(layers.Flatten())
+cnn_model.add(layers.Dense(1))
+cnn_model.compile(loss="mape", optimizer="Adam")
+
+# Fit and Forecast
+cnn_model.fit(cnn_train_features, cnn_train_targets, 1, 5, verbose=0);
+cnn_forecast = cnn_model.predict(cnn_test_features)
+
+# Plot both test data and forecast from the model to compare them visually.
+plot_forecasts(cnn_test_targets, cnn_forecast, title="Simple CNN Model Forecasts");
+```
+
+Plots show comparable performances for simple LSTM and CNN models. Let's quantify the comparison.
+
+```{python}
+#| echo: false
+print(f"MAPE for CNN model is: {mean_absolute_percentage_error(cnn_test_targets, cnn_forecast)}")
+print(f"R2 Score for CNN model is: {r2_score(cnn_test_targets, cnn_forecast)}")
+```
+
+# RNN Model Tuning
+
+In this deep learning tuning part, we will combine tuning of LSTM and CNN models and also several other network types under one category of **RNN Model**. The code will compare pure LSTM, pure CNN, Stacked LSTM, Bidirectional LSTM and CNN-LSTM Models together and select the best performing one.
+
+```{python}
+#| echo: false
+# Define cost function for our case
+def cost_function(storage, y_true, y_pred, book_price, storage_monthly_rent):
+  if storage == 0:
+    if y_pred <= y_true:
+      cost = book_price*(y_true - y_pred)
+      to_storage = 0
+      return cost, to_storage
+    elif y_pred > y_true:
+      cost = storage_monthly_rent/30
+      to_storage = y_pred - y_true
+      return cost, to_storage
+  elif storage > 0:
+    if y_pred <= y_true:
+      if (y_true - y_pred) < storage:
+        cost = storage_monthly_rent/30
+        to_storage = y_pred - y_true
+        return cost, to_storage
+      elif (y_true - y_pred) > storage:
+        cost = book_price*(y_true - y_pred - storage) + storage_monthly_rent/30
+        to_storage = -storage
+        return cost, to_storage
+    elif y_pred > y_true:
+      cost = storage_monthly_rent/30
+      to_storage = y_pred - y_true
+      return cost, to_storage
+```
+
+```{python}
+#| cache: true
+#| code-fold: true
+#| code-summary: "RNN Model Tuning Code"
+#| warning: false
+import optuna
+import warnings
+from tensorflow.keras.layers import Bidirectional
+warnings.filterwarnings("ignore")
+
+# Disable logging
+tf.keras.utils.disable_interactive_logging()
+
+# Define model creation function
+def create_rnn_model(trial):
+  # Define trial variables
+  model_type = trial.suggest_categorical(
+      "model_type",
+      ["vanilla_lstm", "stacked_lstm", "bidirectional_lstm", "cnn", "cnn_lstm"],
+  )
+  
+  dropout = trial.suggest_categorical("dropout", [True, False])
+  
+  if model_type == "vanilla_lstm":
+    # Trial variables
+    units = trial.suggest_int("units", 50, 200)
+    dense_layers = trial.suggest_int("dense_layers", 0, 2)
+    activation = trial.suggest_categorical("activation", ["relu", "tanh"])
+    optimizer = trial.suggest_categorical("optimizer", ["Adam", "RMSprop"])
+    
+    # Define model with trial variables
+    rnn_model = Sequential()
+    rnn_model.add(layers.LSTM(units, activation=activation))
+    
+    for layer in range(dense_layers):
+      rnn_model.add(layers.Dense(units, activation="relu"))
+        
+    if dropout:
+      rnn_model.add(layers.Dropout(rate=0.25))
+    
+    rnn_model.add(layers.Dense(1))
+    rnn_model.compile(loss="mae", optimizer=optimizer)
+    
+    
+  elif model_type == "stacked_lstm":
+    # Trial variables
+    units = trial.suggest_int("units", 50, 200)
+    dense_layers = trial.suggest_int("dense_layers", 0, 2)
+    lstm_layers = trial.suggest_int("lstm_layers", 2, 3)
+    activation = trial.suggest_categorical("activation", ["relu", "tanh"])
+    optimizer = trial.suggest_categorical("optimizer", ["Adam", "RMSprop"])
+    
+    # Define model with trial variables
+    rnn_model = Sequential()
+    
+    for layer in range(lstm_layers):
+      if layer == lstm_layers - 1:
+        rnn_model.add(layers.LSTM(units, activation=activation))
+      else:
+        rnn_model.add(layers.LSTM(units, activation=activation, return_sequences=True))
+    
+    for layer in range(dense_layers):
+      rnn_model.add(layers.Dense(units, activation="relu"))
+    
+    if dropout:
+      rnn_model.add(layers.Dropout(rate=0.25))
+    
+    rnn_model.add(layers.Dense(1))
+    rnn_model.compile(loss="mae", optimizer=optimizer)
+    
+  elif model_type == "bidirectional_lstm":
+    # Trial variables
+    units = trial.suggest_int("units", 50, 200)
+    dense_layers = trial.suggest_int("dense_layers", 0, 2)
+    activation = trial.suggest_categorical("activation", ["relu", "tanh"])
+    optimizer = trial.suggest_categorical("optimizer", ["Adam", "RMSprop"])
+    
+    # Define model with trial variables
+    rnn_model = Sequential()
+    rnn_model.add(Bidirectional(layers.LSTM(units, activation=activation)))
+    
+    for layer in range(dense_layers):
+      rnn_model.add(layers.Dense(units, activation="relu"))
+    
+    if dropout:
+      rnn_model.add(layers.Dropout(rate=0.25))
+    
+    rnn_model.add(layers.Dense(1))
+    rnn_model.compile(loss="mae", optimizer=optimizer)
+  
+  elif model_type == "cnn":
+    # Trial variables
+    units = trial.suggest_int("units", 50, 200)
+    dense_layers = trial.suggest_int("dense_layers", 0, 2)
+    activation = trial.suggest_categorical("activation", ["relu", "tanh"])
+    optimizer = trial.suggest_categorical("optimizer", ["Adam", "RMSprop"])
+    
+    # Define model with trial variables
+    rnn_model = Sequential()
+    rnn_model.add(layers.Conv1D(units, 1, activation=activation))
+    
+    for layer in range(dense_layers):
+      rnn_model.add(layers.Dense(units, activation="relu"))
+      
+    rnn_model.add(layers.Flatten())
+    
+    if dropout:
+      rnn_model.add(layers.Dropout(rate=0.25))
+    
+    rnn_model.add(layers.Dense(1))
+    rnn_model.compile(loss="mae", optimizer=optimizer)
+    
+  elif model_type == "cnn_lstm":
+    # Trial variables
+    units = trial.suggest_int("units", 50, 200)
+    dense_layers = trial.suggest_int("dense_layers", 0, 2)
+    activation = trial.suggest_categorical("activation", ["relu", "tanh"])
+    optimizer = trial.suggest_categorical("optimizer", ["Adam", "RMSprop"])
+    
+    # Define model with trial variables
+    rnn_model = Sequential()
+    rnn_model.add(layers.Conv1D(units, 1, activation=activation))
+    
+    for layer in range(dense_layers):
+      rnn_model.add(layers.Dense(units, activation="relu"))
+    
+    rnn_model.add(layers.LSTM(units, activation=activation))
+    
+    for layer in range(dense_layers):
+      rnn_model.add(layers.Dense(units, activation="relu"))
+    
+    if dropout:
+      rnn_model.add(layers.Dropout(rate=0.25))
+    
+    rnn_model.add(layers.Dense(1))
+    rnn_model.compile(loss="mae", optimizer=optimizer)
+    
+  return rnn_model
+
+
+# Define Optuna Objective
+def rnn_objective(trial):
+  import tensorflow as tf
+  
+  # Define training variables
+  batch_size = trial.suggest_int("batch_size", 1, 100, log=True)
+  epochs = trial.suggest_int("epochs", 10, 100)
+  
+  # Call model
+  rnn_model = create_rnn_model(trial)
+  
+  # Fit the model
+  rnn_model.fit(lstm_train_features, lstm_train_targets, batch_size, epochs, verbose=0);
+
+  # Forecast for the test data
+  rnn_forecast = rnn_model.predict(lstm_test_features)
+
+  # Create a loop to calculate cumulative cost of the forecast
+  storage = 0
+  cumulative_cost = 0
+  book_price = 20
+  monthly_storage_cost = 100
+  for step in range(len(lstm_test_targets)):
+
+    # Get the cost and difference for storage for the current step
+    cost, to_storage = cost_function(
+      storage, 
+      lstm_test_targets[step], 
+      rnn_forecast[step][0], 
+      book_price, 
+      monthly_storage_cost)
+
+    # Add cost to cumulative cost and storage difference to storage
+    cumulative_cost += int(cost)
+    storage += int(to_storage)
+
+  total_cost = cumulative_cost + storage*book_price
+  return total_cost
+
+# Create Optuna Study and Minimize total_cost
+rnn_study = optuna.create_study(direction="minimize", sampler=optuna.samplers.QMCSampler())
+rnn_study.optimize(rnn_objective, n_trials=20)
+```
+
+```{python}
+#| code-fold: true
+#| cache: true
+#| code-summary: "RNN Model with Best Parameters"
+#| warning: false
+
+# Disable logging
+tf.keras.utils.disable_interactive_logging()
+
+# Define best model parameters
+best_rnn_model_parameters = rnn_study.best_params
+model_type = best_rnn_model_parameters["model_type"]
+units = best_rnn_model_parameters["units"]
+activation = best_rnn_model_parameters["activation"]
+dense_layers = best_rnn_model_parameters["dense_layers"]
+lstm_layers = best_rnn_model_parameters["lstm_layers"] if "lstm_layers" in best_rnn_model_parameters.keys() else 0
+optimizer = best_rnn_model_parameters["optimizer"]
+batch_size = best_rnn_model_parameters["batch_size"]
+epochs = best_rnn_model_parameters["epochs"]
+dropout = best_rnn_model_parameters["dropout"]
+
+test_subset = subset[730:1095]
+val_subset = subset[1095:1461]
+
+test_targets = np.array(test_subset["num_sold"])
+test_features = np.array(test_subset.drop(columns=["num_sold"])).reshape((test_subset.shape[0], 1, test_subset.shape[1] - 1))
+val_targets = np.array(val_subset["num_sold"])
+val_features = np.array(val_subset.drop(columns=["num_sold"])).reshape((val_subset.shape[0], 1, val_subset.shape[1] - 1))
+
+
+if model_type == "vanilla_lstm":
+
+    # Define model with trial variables
+    rnn_model = Sequential()
+    rnn_model.add(layers.LSTM(units, activation=activation))
+
+    for layer in range(dense_layers):
+        rnn_model.add(layers.Dense(units, activation="relu"))
+        
+    if dropout:
+      rnn_model.add(layers.Dropout(rate=0.25))
+    
+    rnn_model.add(layers.Dense(1))
+    rnn_model.compile(loss="mae", optimizer=optimizer)
+
+
+elif model_type == "stacked_lstm":
+
+    # Define model with trial variables
+    rnn_model = Sequential()
+
+    for layer in range(lstm_layers):
+        if layer == lstm_layers - 1:
+            rnn_model.add(layers.LSTM(units, activation=activation))
+        else:
+            rnn_model.add(layers.LSTM(units, activation=activation, return_sequences=True))
+
+    for layer in range(dense_layers):
+        rnn_model.add(layers.Dense(units, activation="relu"))
+
+    if dropout:
+      rnn_model.add(layers.Dropout(rate=0.25))
+
+    rnn_model.add(layers.Dense(1))
+    rnn_model.compile(loss="mae", optimizer=optimizer)
+
+elif model_type == "bidirectional_lstm":
+
+    # Define model with trial variables
+    rnn_model = Sequential()
+    rnn_model.add(Bidirectional(layers.LSTM(units, activation=activation)))
+
+    for layer in range(dense_layers):
+        rnn_model.add(layers.Dense(units, activation="relu"))
+
+    if dropout:
+      rnn_model.add(layers.Dropout(rate=0.25))
+
+    rnn_model.add(layers.Dense(1))
+    rnn_model.compile(loss="mae", optimizer=optimizer)
+
+elif model_type == "cnn":
+
+    # Define model with trial variables
+    rnn_model = Sequential()
+    rnn_model.add(layers.Conv1D(units, 1, activation=activation))
+
+    for layer in range(dense_layers):
+        rnn_model.add(layers.Dense(units, activation="relu"))
+        
+    rnn_model.add(layers.Flatten())
+    
+    if dropout:
+      rnn_model.add(layers.Dropout(rate=0.25))
+    
+    rnn_model.add(layers.Dense(1))
+    rnn_model.compile(loss="mae", optimizer=optimizer)
+
+elif model_type == "cnn_lstm":
+
+    # Define model with trial variables
+    rnn_model = Sequential()
+    rnn_model.add(layers.Conv1D(units, 1, activation=activation))
+
+    for layer in range(dense_layers):
+        rnn_model.add(layers.Dense(units, activation="relu"))
+
+    rnn_model.add(layers.LSTM(units, activation=activation))
+
+    for layer in range(dense_layers):
+        rnn_model.add(layers.Dense(units, activation="relu"))
+
+    if dropout:
+      rnn_model.add(layers.Dropout(rate=0.25))
+
+    rnn_model.add(layers.Dense(1))
+    rnn_model.compile(loss="mae", optimizer=optimizer)
+    
+# Fit the model
+rnn_model.fit(test_features,
+              test_targets,
+              batch_size,
+              epochs,
+              verbose=1,
+              validation_data=(val_features, val_targets),
+              callbacks=tf.keras.callbacks.EarlyStopping(patience=7, min_delta=0.1));
+
+# Forecast for the test data
+rnn_forecast = rnn_model.predict(val_features)
+
+# Calculate total cost
+storage = 0
+cumulative_cost = 0
+book_price = 20
+monthly_storage_cost = 100
+for step in range(len(val_targets)):
+
+    # Get the cost and difference for storage for the current step
+    cost, to_storage = cost_function(
+      storage, 
+      val_targets[step], 
+      rnn_forecast[step][0], 
+      book_price, 
+      monthly_storage_cost)
+
+    # Add cost to cumulative cost and storage difference to storage
+    cumulative_cost += int(cost)
+    storage += int(to_storage)
+
+rnn_model_total_cost = cumulative_cost + storage*book_price
+
+# Plot both test data and forecast from the model to compare them visually.
+plot_forecasts(val_targets, rnn_forecast, title="Simple LSTM Model Forecasts");
+```
+
+```{python}
+#| echo: false
+print(f"MAPE for Tuned RNN Model is: {mean_absolute_percentage_error(val_targets, rnn_forecast)}")
+print(f"R2 Score for Tuned RNN Model is: {r2_score(val_targets, rnn_forecast)}\n")
+
+print(f"Total Cost for Tuned RNN Model is: €{rnn_model_total_cost:,.2f}")
+```
+
+# Results and Conclusion
+
+```{python}
+#| echo: false
+tuning_results = {
+  "STL ARIMA": 65375,
+  "ARIMAX": 618358,
+  "XGBoost": 61498,
+  "RNN Model": rnn_model_total_cost
+}
+
+tuning_results = sorted(tuning_results.items(), key=lambda x:x[1])
+best_model_name = tuning_results[0][0]
+best_model_cost = tuning_results[0][1]
+```
+
+We have tuned all models and calculated the total costs in terms of our cost function and the winner is **XGBoost** with the total cost of **€61,498.00**! XGBoost's performance is not surprising given that it is usually the winning model for competitions but STL-ARIMA has also performed very successfully. RNN models were, for me, somewhat disappointing; however, it should be stated that we didn't fully utilized LSTM cells' memory because we have only used one timestep in the input. Increasing timesteps could potentially improve its performance. ARIMAX was the worst performer even with tuning. It could be because of the feature matrix that we have created couldn't fully capture seasonality and trend.
+
+Even though we have added calendar features, they might not be enough to predict seasonality and trend. Therefore, a decomposition model where a model similar to STL decompose the time series to trend, seasonality, and residuals and after that a seperate regression model trained on only residuals could potentially be more accurate; but that's all for this post.
+
+**Thank you for reading this post and see you on the next one!**

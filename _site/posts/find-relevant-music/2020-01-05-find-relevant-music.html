@@ -1,0 +1,535 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en"><head>
+
+<meta charset="utf-8">
+<meta name="generator" content="quarto-1.2.269">
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+
+<meta name="dcterms.date" content="2022-08-09">
+<meta name="description" content="Creating a Playlist Sorter Using Python and Spotify API">
+
+<title>Data and Decisions - A Simple Way to Find Relevant Music on Spotify</title>
+<style>
+code{white-space: pre-wrap;}
+span.smallcaps{font-variant: small-caps;}
+div.columns{display: flex; gap: min(4vw, 1.5em);}
+div.column{flex: auto; overflow-x: auto;}
+div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+ul.task-list{list-style: none;}
+ul.task-list li input[type="checkbox"] {
+  width: 0.8em;
+  margin: 0 0.8em 0.2em -1.6em;
+  vertical-align: middle;
+}
+pre > code.sourceCode { white-space: pre; position: relative; }
+pre > code.sourceCode > span { display: inline-block; line-height: 1.25; }
+pre > code.sourceCode > span:empty { height: 1.2em; }
+.sourceCode { overflow: visible; }
+code.sourceCode > span { color: inherit; text-decoration: inherit; }
+div.sourceCode { margin: 1em 0; }
+pre.sourceCode { margin: 0; }
+@media screen {
+div.sourceCode { overflow: auto; }
+}
+@media print {
+pre > code.sourceCode { white-space: pre-wrap; }
+pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+}
+pre.numberSource code
+  { counter-reset: source-line 0; }
+pre.numberSource code > span
+  { position: relative; left: -4em; counter-increment: source-line; }
+pre.numberSource code > span > a:first-child::before
+  { content: counter(source-line);
+    position: relative; left: -1em; text-align: right; vertical-align: baseline;
+    border: none; display: inline-block;
+    -webkit-touch-callout: none; -webkit-user-select: none;
+    -khtml-user-select: none; -moz-user-select: none;
+    -ms-user-select: none; user-select: none;
+    padding: 0 4px; width: 4em;
+    color: #aaaaaa;
+  }
+pre.numberSource { margin-left: 3em; border-left: 1px solid #aaaaaa;  padding-left: 4px; }
+div.sourceCode
+  {   }
+@media screen {
+pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+}
+code span.al { color: #ff0000; font-weight: bold; } /* Alert */
+code span.an { color: #60a0b0; font-weight: bold; font-style: italic; } /* Annotation */
+code span.at { color: #7d9029; } /* Attribute */
+code span.bn { color: #40a070; } /* BaseN */
+code span.bu { color: #008000; } /* BuiltIn */
+code span.cf { color: #007020; font-weight: bold; } /* ControlFlow */
+code span.ch { color: #4070a0; } /* Char */
+code span.cn { color: #880000; } /* Constant */
+code span.co { color: #60a0b0; font-style: italic; } /* Comment */
+code span.cv { color: #60a0b0; font-weight: bold; font-style: italic; } /* CommentVar */
+code span.do { color: #ba2121; font-style: italic; } /* Documentation */
+code span.dt { color: #902000; } /* DataType */
+code span.dv { color: #40a070; } /* DecVal */
+code span.er { color: #ff0000; font-weight: bold; } /* Error */
+code span.ex { } /* Extension */
+code span.fl { color: #40a070; } /* Float */
+code span.fu { color: #06287e; } /* Function */
+code span.im { color: #008000; font-weight: bold; } /* Import */
+code span.in { color: #60a0b0; font-weight: bold; font-style: italic; } /* Information */
+code span.kw { color: #007020; font-weight: bold; } /* Keyword */
+code span.op { color: #666666; } /* Operator */
+code span.ot { color: #007020; } /* Other */
+code span.pp { color: #bc7a00; } /* Preprocessor */
+code span.sc { color: #4070a0; } /* SpecialChar */
+code span.ss { color: #bb6688; } /* SpecialString */
+code span.st { color: #4070a0; } /* String */
+code span.va { color: #19177c; } /* Variable */
+code span.vs { color: #4070a0; } /* VerbatimString */
+code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warning */
+</style>
+
+
+<script src="../../site_libs/quarto-nav/quarto-nav.js"></script>
+<script src="../../site_libs/quarto-nav/headroom.min.js"></script>
+<script src="../../site_libs/clipboard/clipboard.min.js"></script>
+<script src="../../site_libs/quarto-search/autocomplete.umd.js"></script>
+<script src="../../site_libs/quarto-search/fuse.min.js"></script>
+<script src="../../site_libs/quarto-search/quarto-search.js"></script>
+<meta name="quarto:offset" content="../../">
+<script src="../../site_libs/quarto-html/quarto.js"></script>
+<script src="../../site_libs/quarto-html/popper.min.js"></script>
+<script src="../../site_libs/quarto-html/tippy.umd.min.js"></script>
+<script src="../../site_libs/quarto-html/anchor.min.js"></script>
+<link href="../../site_libs/quarto-html/tippy.css" rel="stylesheet">
+<link href="../../site_libs/quarto-html/quarto-syntax-highlighting.css" rel="stylesheet" id="quarto-text-highlighting-styles">
+<script src="../../site_libs/bootstrap/bootstrap.min.js"></script>
+<link href="../../site_libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
+<link href="../../site_libs/bootstrap/bootstrap.min.css" rel="stylesheet" id="quarto-bootstrap" data-mode="light">
+<script id="quarto-search-options" type="application/json">{
+  "location": "navbar",
+  "copy-button": false,
+  "collapse-after": 3,
+  "panel-placement": "end",
+  "type": "overlay",
+  "limit": 20,
+  "language": {
+    "search-no-results-text": "No results",
+    "search-matching-documents-text": "matching documents",
+    "search-copy-link-title": "Copy link to search",
+    "search-hide-matches-text": "Hide additional matches",
+    "search-more-match-text": "more match in this document",
+    "search-more-matches-text": "more matches in this document",
+    "search-clear-button-title": "Clear",
+    "search-detached-cancel-button-title": "Cancel",
+    "search-submit-button-title": "Submit"
+  }
+}</script>
+
+
+<link rel="stylesheet" href="../../styles.css">
+</head>
+
+<body class="nav-fixed fullcontent">
+
+<div id="quarto-search-results"></div>
+  <header id="quarto-header" class="headroom fixed-top">
+    <nav class="navbar navbar-expand-lg navbar-dark ">
+      <div class="navbar-container container-fluid">
+      <div class="navbar-brand-container">
+    <a class="navbar-brand" href="../../index.html">
+    <span class="navbar-title">Data and Decisions</span>
+    </a>
+  </div>
+          <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarCollapse" aria-controls="navbarCollapse" aria-expanded="false" aria-label="Toggle navigation" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">
+  <span class="navbar-toggler-icon"></span>
+</button>
+          <div class="collapse navbar-collapse" id="navbarCollapse">
+            <ul class="navbar-nav navbar-nav-scroll ms-auto">
+  <li class="nav-item">
+    <a class="nav-link" href="../../about.html">
+ <span class="menu-text">About</span></a>
+  </li>  
+  <li class="nav-item compact">
+    <a class="nav-link" href="https://github.com/bertugmirasyedi"><i class="bi bi-github" role="img">
+</i> 
+ <span class="menu-text"></span></a>
+  </li>  
+  <li class="nav-item compact">
+    <a class="nav-link" href="https://twitter.com/bertugmirasyedi"><i class="bi bi-twitter" role="img">
+</i> 
+ <span class="menu-text"></span></a>
+  </li>  
+</ul>
+              <div id="quarto-search" class="" title="Search"></div>
+          </div> <!-- /navcollapse -->
+      </div> <!-- /container-fluid -->
+    </nav>
+</header>
+<!-- content -->
+<header id="title-block-header" class="quarto-title-block default page-columns page-full">
+  <div class="quarto-title-banner page-columns page-full">
+    <div class="quarto-title column-body">
+      <h1 class="title">A Simple Way to Find Relevant Music on Spotify</h1>
+                  <div>
+        <div class="description">
+          Creating a Playlist Sorter Using Python and Spotify API
+        </div>
+      </div>
+                          <div class="quarto-categories">
+                <div class="quarto-category">python</div>
+                <div class="quarto-category">spotify</div>
+                <div class="quarto-category">recommender systems</div>
+              </div>
+                  </div>
+  </div>
+    
+  
+  <div class="quarto-title-meta">
+
+      
+      <div>
+      <div class="quarto-title-meta-heading">Published</div>
+      <div class="quarto-title-meta-contents">
+        <p class="date">August 9, 2022</p>
+      </div>
+    </div>
+    
+      
+    </div>
+    
+  
+  </header><div id="quarto-content" class="quarto-container page-columns page-rows-contents page-layout-article page-navbar">
+<!-- sidebar -->
+<!-- margin-sidebar -->
+    
+<!-- main -->
+<main class="content quarto-banner-title-block" id="quarto-document-content">
+
+
+
+
+<p><img src="spotify.jpg" class="img-fluid"></p>
+<p><em>Time to read: 10 minutes</em></p>
+<ul>
+<li><a href="#introduction">Introduction</a></li>
+<li><a href="#background">Background</a></li>
+<li><a href="#methodology">Methodology</a></li>
+<li><a href="#results">Results</a></li>
+<li><a href="#discussion">Discussion</a></li>
+</ul>
+<section id="introduction" class="level2">
+<h2 class="anchored" data-anchor-id="introduction">Introduction</h2>
+<p>Listening to music is, like most of the people, one of my favourite things to do. It makes one to experience all kinds of emotions and commuting in Istanbul a much less dreadful journey. But another aspect of the music which I equally love is discovering it and today I will talk about my Python script that help me achieve this.</p>
+<p>The way I will discover new music is through playlists. Using Spotify API, the script will search playlists with given keyword and sort them by the most song overlaps with songs that I have already liked. Even though it does not feature any advanced algorithms; it is simple, does not require any personal data of others and the results were effective for me.</p>
+</section>
+<section id="background" class="level2">
+<h2 class="anchored" data-anchor-id="background">Background</h2>
+<blockquote class="blockquote">
+<p>A recommender system, or a recommendation system (sometimes replacing ‘system’ with a synonym such as platform or engine), is a subclass of information filtering system that provide suggestions for items that are most pertinent to a particular user. Typically, the suggestions refer to various decision-making processes, such as what product to purchase, what music to listen to, or what online news to read. Recommender systems are particularly useful when an individual needs to choose an item from a potentially overwhelming number of items that a service may offer. <a href="#fn1" class="footnote-ref" id="fnref1" role="doc-noteref"><sup>1</sup></a></p>
+</blockquote>
+<p>So basically, a recommender system uses past behaviour or tastes of people (<strong>collaborative filtering</strong>) or inherent features of things (<strong>content-based</strong>) to recommend new items for users. To give content-based recommendations, firstly, items in which we are interested recommending should have preselected and/or user generated properties. Secondly, users must rate enough of these items so that we can try to understand what properties each user favors. <a href="https://www.pandora.com/about/mgp">Music Genome Project</a> of Pandora<a href="#fn2" class="footnote-ref" id="fnref2" role="doc-noteref"><sup>2</sup></a> can be given as an example for this method. Content-based approaches has the advantage of relevancy. Provided the classification of items is done properly, content-based recommendations will almost always be relevant. However, the recommendations are also likely to be “too similar” to what the user has already liked; in other words less <em>serendipitous</em> and they omit the context<a href="#fn3" class="footnote-ref" id="fnref3" role="doc-noteref"><sup>3</sup></a>. Let’s say there are two books about the same subject and while one of them is supportive of the topic, other one is against it. Content-based recommendation has no method to differentiate this aspect of items.</p>
+<figure class="figure">
+<p align="center">
+<img src="images/mgp.png" alt="mpg" width="450" height="450" class="figure-img">
+</p>
+<figcaption align="center" class="figure-caption">
+<b>Figure 1.</b><i> Music Genome Project Flowchart</i>
+</figcaption>
+</figure>
+<p>Recommendations using collaborative filtering mostly overcomes these drawbacks. Users that have similar tastes can recommend each other the items that neither could find another way. Also it is more probably that similar users like an item in the same context. There are two ways of collaborative filtering: <strong>item-based</strong> and <strong>user-based</strong>. <em>Item-based collaborative filtering</em> is closer content-based methods in theory because they both use item similarity to recommend an item. However, whereas content-based recommendation uses their content to measure similarity, item-based collaborative filtering utilizes the taste of users to determine similarity. If several users rate such items in a similar fashion, they are likely to be similar too. <em>User-based collaborative filtering</em>, in some cases named as neighborhood-based collaborative filtering, purely based on the proximity of user tastes. Algorithms such as k-Nearest-Neighbors, finds the shortest distance between users by their ratings of same items. Once the closest neighbors are found, their highly rated but unseen to other neighbor items are recommended.</p>
+</section>
+<section id="methodology" class="level2">
+<h2 class="anchored" data-anchor-id="methodology">Methodology</h2>
+<p>In this part I will show and explain my method of recommendation with snippets from my Python script. All of the code will be available at my <a href="https://www.github.com/bertugmirasyedi">GitHub</a> page. The basic algorithm is shown in the Figure 2.</p>
+<figure class="figure">
+<p align="center">
+<img src="images/flowchart.png" alt="flowchart" width="550" height="750" class="figure-img">
+</p>
+<figcaption align="center" class="figure-caption">
+<b>Figure 2.</b><i> Flowchart of the Python Script</i>
+</figcaption>
+</figure>
+<p>Because I will use Spotify Web API, to access endpoints faster and respect the rate limits, it is better to use a Python wrapper. So my communication with API will be handled by <a href="https://spotipy.readthedocs.io/en/master/">Spotipy</a>. Let’s start with importing the required modules.</p>
+<div class="sourceCode" id="cb1"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> spotipy</span>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> spotipy.oauth2 <span class="im">import</span> SpotifyOAuth     <span class="co">#Spotipy Authentication Module</span></span>
+<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> time     <span class="co">#To track time</span></span>
+<span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> os       <span class="co">#We need os to get environment variables</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<p>First, we need to set a Spotipy client with credentials and scope.</p>
+<div class="sourceCode" id="cb2"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a>scope <span class="op">=</span> [<span class="st">"user-library-read"</span>,</span>
+<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a>         <span class="st">"user-read-playback-state"</span>,</span>
+<span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a>         <span class="st">"user-modify-playback-state"</span>,</span>
+<span id="cb2-4"><a href="#cb2-4" aria-hidden="true" tabindex="-1"></a>         <span class="st">"playlist-modify-public"</span>]</span>
+<span id="cb2-5"><a href="#cb2-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-6"><a href="#cb2-6" aria-hidden="true" tabindex="-1"></a>auth_manager <span class="op">=</span> SpotifyOAuth(scope<span class="op">=</span>scope, </span>
+<span id="cb2-7"><a href="#cb2-7" aria-hidden="true" tabindex="-1"></a>                            redirect_uri<span class="op">=</span><span class="st">"http://localhost:8080"</span>, </span>
+<span id="cb2-8"><a href="#cb2-8" aria-hidden="true" tabindex="-1"></a>                            show_dialog<span class="op">=</span><span class="va">True</span>)</span>
+<span id="cb2-9"><a href="#cb2-9" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-10"><a href="#cb2-10" aria-hidden="true" tabindex="-1"></a>sp <span class="op">=</span> spotipy.Spotify(auth_manager<span class="op">=</span>auth_manager)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<p><code>SpotifyOAuth</code> here is expecting two variables namely <code>SPOTIPY_CLIENT_ID</code> and <code>SPOTIPY_CLIENT_SECRET</code> to authenticate our client. I have added them as environment variables.</p>
+<p>The spotipy client is set and ready to access Spotify API. The script asks for an input as a query for searching playlists. I have used genres as query, since they are most likely to have relevant songs in them. The aim is to find playlists with the most overlap with my “Liked Songs”, with minimal search.</p>
+<div class="sourceCode" id="cb3"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a>query <span class="op">=</span> <span class="bu">input</span>(<span class="st">"Search for playlists: "</span>)</span>
+<span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a>start_time <span class="op">=</span> time.time()</span>
+<span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-4"><a href="#cb3-4" aria-hidden="true" tabindex="-1"></a>playlists <span class="op">=</span> <span class="bu">list</span>()</span>
+<span id="cb3-5"><a href="#cb3-5" aria-hidden="true" tabindex="-1"></a>offset <span class="op">=</span> <span class="dv">0</span></span>
+<span id="cb3-6"><a href="#cb3-6" aria-hidden="true" tabindex="-1"></a>end_offset <span class="op">=</span> <span class="dv">150</span></span>
+<span id="cb3-7"><a href="#cb3-7" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> offset <span class="kw">in</span> <span class="bu">range</span>(<span class="dv">0</span>, (end_offset <span class="op">+</span> <span class="dv">1</span>), <span class="dv">50</span>):</span>
+<span id="cb3-8"><a href="#cb3-8" aria-hidden="true" tabindex="-1"></a>    playlists.append(sp.search(query, <span class="dv">50</span>, <span class="bu">type</span><span class="op">=</span><span class="st">"playlist"</span>, offset<span class="op">=</span>offset))</span>
+<span id="cb3-9"><a href="#cb3-9" aria-hidden="true" tabindex="-1"></a>    <span class="bu">print</span>((offset <span class="op">+</span> <span class="dv">50</span>), <span class="st">"playlists added.</span><span class="ch">\n</span><span class="st">"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<p>The reason for the increment of 50 is due to Spotify API’s restriction of the number of items that can be searched in one go to 50. Now we have <code>playlists</code> object as JSON response from the API.</p>
+<p>Next, I will create a <code>tracks_response</code> variable that will contain all songs IDs of the playlists.</p>
+<div class="sourceCode" id="cb4"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a>tracks_response <span class="op">=</span> <span class="bu">list</span>()</span>
+<span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="st">"Creating tracks_response.</span><span class="ch">\n</span><span class="st">"</span>)</span>
+<span id="cb4-3"><a href="#cb4-3" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> page <span class="kw">in</span> <span class="bu">range</span>(<span class="bu">len</span>(playlists)):</span>
+<span id="cb4-4"><a href="#cb4-4" aria-hidden="true" tabindex="-1"></a>    <span class="cf">for</span> p <span class="kw">in</span> <span class="bu">range</span>(<span class="bu">len</span>(playlists[page][<span class="st">"playlists"</span>][<span class="st">"items"</span>])):</span>
+<span id="cb4-5"><a href="#cb4-5" aria-hidden="true" tabindex="-1"></a>        placeholder_tracks_response <span class="op">=</span> <span class="bu">list</span>()</span>
+<span id="cb4-6"><a href="#cb4-6" aria-hidden="true" tabindex="-1"></a>        current_playlist_track_count <span class="op">=</span> sp.playlist_tracks(playlists[page][<span class="st">"playlists"</span>][<span class="st">"items"</span>][p][<span class="st">"id"</span>])[<span class="st">"total"</span>]</span>
+<span id="cb4-7"><a href="#cb4-7" aria-hidden="true" tabindex="-1"></a>        <span class="cf">if</span> current_playlist_track_count <span class="op">&lt;</span> <span class="dv">100</span>:</span>
+<span id="cb4-8"><a href="#cb4-8" aria-hidden="true" tabindex="-1"></a>            tracks_response.append(sp.playlist_items(playlists[page][<span class="st">"playlists"</span>][<span class="st">"items"</span>][p][<span class="st">"id"</span>], </span>
+<span id="cb4-9"><a href="#cb4-9" aria-hidden="true" tabindex="-1"></a>                                                fields<span class="op">=</span><span class="st">"items(track(id))"</span>))</span>
+<span id="cb4-10"><a href="#cb4-10" aria-hidden="true" tabindex="-1"></a>        <span class="cf">else</span>:</span>
+<span id="cb4-11"><a href="#cb4-11" aria-hidden="true" tabindex="-1"></a>            offset <span class="op">=</span> <span class="dv">0</span></span>
+<span id="cb4-12"><a href="#cb4-12" aria-hidden="true" tabindex="-1"></a>            <span class="cf">for</span> i <span class="kw">in</span> <span class="bu">range</span>(<span class="dv">0</span>, current_playlist_track_count, <span class="dv">100</span>):</span>
+<span id="cb4-13"><a href="#cb4-13" aria-hidden="true" tabindex="-1"></a>                placeholder_tracks_response.append(sp.playlist_items(playlists[page][<span class="st">"playlists"</span>][<span class="st">"items"</span>][p][<span class="st">"id"</span>], </span>
+<span id="cb4-14"><a href="#cb4-14" aria-hidden="true" tabindex="-1"></a>                                                fields<span class="op">=</span><span class="st">"items(track(id))"</span>, offset<span class="op">=</span>offset))</span>
+<span id="cb4-15"><a href="#cb4-15" aria-hidden="true" tabindex="-1"></a>                offset <span class="op">+=</span> <span class="dv">100</span></span>
+<span id="cb4-16"><a href="#cb4-16" aria-hidden="true" tabindex="-1"></a>            all_placeholders_together <span class="op">=</span> <span class="bu">list</span>()</span>
+<span id="cb4-17"><a href="#cb4-17" aria-hidden="true" tabindex="-1"></a>            <span class="cf">for</span> k <span class="kw">in</span> <span class="bu">range</span>(<span class="bu">len</span>(placeholder_tracks_response)):</span>
+<span id="cb4-18"><a href="#cb4-18" aria-hidden="true" tabindex="-1"></a>                all_placeholders_together.append(placeholder_tracks_response[k][<span class="st">"items"</span>])</span>
+<span id="cb4-19"><a href="#cb4-19" aria-hidden="true" tabindex="-1"></a>            all_placeholders_together <span class="op">=</span> <span class="bu">dict</span>(items <span class="op">=</span> all_placeholders_together)</span>
+<span id="cb4-20"><a href="#cb4-20" aria-hidden="true" tabindex="-1"></a>            tracks_response.append(all_placeholders_together)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<p>This part of the script basically goes through the <code>playlists</code> item by item and adds the song IDs to <code>tracks_response</code>. Since the API can reach only 100 items at once, the script checks for the number of songs. If it is greater than 100, script adds the IDs by parts of 100 items.</p>
+<p>Now we have a list object that has all of the songs IDs of each playlist. It is time to compare the tracks of these playlists with my ‘Liked Songs’. We will create a <code>results</code> list and add a <code>True</code> for each match; otherwise a <code>False</code>.</p>
+<div class="sourceCode" id="cb5"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a>results <span class="op">=</span> <span class="bu">list</span>()</span>
+<span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> i <span class="kw">in</span> <span class="bu">range</span>(<span class="bu">len</span>(singleLayerTracksResponse)):</span>
+<span id="cb5-3"><a href="#cb5-3" aria-hidden="true" tabindex="-1"></a>    tracklist_contains_songs <span class="op">=</span> <span class="bu">list</span>()</span>
+<span id="cb5-4"><a href="#cb5-4" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> <span class="va">None</span> <span class="kw">in</span> singleLayerTracksResponse[i]:</span>
+<span id="cb5-5"><a href="#cb5-5" aria-hidden="true" tabindex="-1"></a>        <span class="cf">while</span> (<span class="va">None</span> <span class="kw">in</span> singleLayerTracksResponse[i]) <span class="kw">is</span> <span class="va">True</span>:</span>
+<span id="cb5-6"><a href="#cb5-6" aria-hidden="true" tabindex="-1"></a>            singleLayerTracksResponse[i][singleLayerTracksResponse[i].index(<span class="va">None</span>)] <span class="op">=</span> <span class="st">"4cOdK2wGLETKBW3PvgPWqT"</span></span>
+<span id="cb5-7"><a href="#cb5-7" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> <span class="bu">len</span>(singleLayerTracksResponse[i]) <span class="op">&lt;=</span> <span class="dv">50</span>:</span>
+<span id="cb5-8"><a href="#cb5-8" aria-hidden="true" tabindex="-1"></a>        tracklist_contains_songs.append(sp.current_user_saved_tracks_contains(singleLayerTracksResponse[i]))</span>
+<span id="cb5-9"><a href="#cb5-9" aria-hidden="true" tabindex="-1"></a>    <span class="cf">else</span>:</span>
+<span id="cb5-10"><a href="#cb5-10" aria-hidden="true" tabindex="-1"></a>        page, remainder <span class="op">=</span> <span class="bu">divmod</span>(<span class="bu">len</span>(singleLayerTracksResponse[i]), <span class="dv">50</span>)</span>
+<span id="cb5-11"><a href="#cb5-11" aria-hidden="true" tabindex="-1"></a>        offset <span class="op">=</span> <span class="dv">0</span></span>
+<span id="cb5-12"><a href="#cb5-12" aria-hidden="true" tabindex="-1"></a>        <span class="cf">if</span> remainder <span class="op">==</span> <span class="dv">0</span>:</span>
+<span id="cb5-13"><a href="#cb5-13" aria-hidden="true" tabindex="-1"></a>            <span class="cf">for</span> j <span class="kw">in</span> <span class="bu">range</span>(page):</span>
+<span id="cb5-14"><a href="#cb5-14" aria-hidden="true" tabindex="-1"></a>                tracklist_contains_songs.append(sp.current_user_saved_tracks_contains(singleLayerTracksResponse[i][offset:(offset <span class="op">+</span> <span class="dv">50</span>)]))</span>
+<span id="cb5-15"><a href="#cb5-15" aria-hidden="true" tabindex="-1"></a>                offset <span class="op">+=</span> <span class="dv">50</span></span>
+<span id="cb5-16"><a href="#cb5-16" aria-hidden="true" tabindex="-1"></a>        <span class="cf">else</span>:</span>
+<span id="cb5-17"><a href="#cb5-17" aria-hidden="true" tabindex="-1"></a>            offset <span class="op">=</span> <span class="dv">0</span></span>
+<span id="cb5-18"><a href="#cb5-18" aria-hidden="true" tabindex="-1"></a>            <span class="cf">for</span> j <span class="kw">in</span> <span class="bu">range</span>(page):</span>
+<span id="cb5-19"><a href="#cb5-19" aria-hidden="true" tabindex="-1"></a>                tracklist_contains_songs.append(sp.current_user_saved_tracks_contains(singleLayerTracksResponse[i][offset:(offset <span class="op">+</span> <span class="dv">50</span>)]))</span>
+<span id="cb5-20"><a href="#cb5-20" aria-hidden="true" tabindex="-1"></a>                offset <span class="op">+=</span> <span class="dv">50</span></span>
+<span id="cb5-21"><a href="#cb5-21" aria-hidden="true" tabindex="-1"></a>            tracklist_contains_songs.append(sp.current_user_saved_tracks_contains(singleLayerTracksResponse[i][offset:(offset <span class="op">+</span> remainder)]))</span>
+<span id="cb5-22"><a href="#cb5-22" aria-hidden="true" tabindex="-1"></a>    results.append(tracklist_contains_songs)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<p>There are two important points in this part of the script. First of all, there could be local songs in these playlists and they don’t have a unique song ID. Therefore, the script adds a <a href="https://www.youtube.com/watch?v=dQw4w9WgXcQ">dummy song</a> in place of NoneType object, which the API can’t handle. Second point, to reduce the load on the API and to reduce the chance of being rate limited, the script checks the track overlap with 50 item batches. When I first wrote the script, it didn’t utilize this and as a result, it was rate limited. This simple trick also <em>reduced the total runtime by 65%</em>.</p>
+<p>Continuing, this part counts the number of <code>True</code>s and stores them in <code>songOverlaps</code></p>
+<div class="sourceCode" id="cb6"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a>songOverlaps <span class="op">=</span> <span class="bu">list</span>()</span>
+<span id="cb6-2"><a href="#cb6-2" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> plist <span class="kw">in</span> <span class="bu">range</span>(<span class="bu">len</span>(results)):</span>
+<span id="cb6-3"><a href="#cb6-3" aria-hidden="true" tabindex="-1"></a>    songCounter <span class="op">=</span> <span class="dv">0</span></span>
+<span id="cb6-4"><a href="#cb6-4" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> <span class="bu">len</span>(results[plist]) <span class="op">==</span> <span class="dv">1</span>:</span>
+<span id="cb6-5"><a href="#cb6-5" aria-hidden="true" tabindex="-1"></a>        songCounter <span class="op">=</span> results[plist].count(<span class="va">True</span>)</span>
+<span id="cb6-6"><a href="#cb6-6" aria-hidden="true" tabindex="-1"></a>    <span class="cf">else</span>:</span>
+<span id="cb6-7"><a href="#cb6-7" aria-hidden="true" tabindex="-1"></a>        <span class="cf">for</span> p <span class="kw">in</span> <span class="bu">range</span>(<span class="bu">len</span>(results[plist])):</span>
+<span id="cb6-8"><a href="#cb6-8" aria-hidden="true" tabindex="-1"></a>            songCounter <span class="op">+=</span> results[plist][p].count(<span class="va">True</span>)</span>
+<span id="cb6-9"><a href="#cb6-9" aria-hidden="true" tabindex="-1"></a>    songOverlaps.append(songCounter)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<p>After that comes the sorting of playlists from the most overlapping to least and storing their original indice in <code>mostOverlapPlaylists_indices</code>.</p>
+<div class="sourceCode" id="cb7"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a>songOverlaps_original <span class="op">=</span> songOverlaps.copy()</span>
+<span id="cb7-2"><a href="#cb7-2" aria-hidden="true" tabindex="-1"></a>songOverlaps_sorted <span class="op">=</span> songOverlaps.copy()</span>
+<span id="cb7-3"><a href="#cb7-3" aria-hidden="true" tabindex="-1"></a>songOverlaps_sorted.sort(reverse<span class="op">=</span><span class="dv">1</span>)</span>
+<span id="cb7-4"><a href="#cb7-4" aria-hidden="true" tabindex="-1"></a>mostOverlapsPlaylists_indices <span class="op">=</span> <span class="bu">list</span>()</span>
+<span id="cb7-5"><a href="#cb7-5" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> x <span class="kw">in</span> <span class="bu">range</span>(<span class="dv">0</span>, <span class="dv">6</span>):</span>
+<span id="cb7-6"><a href="#cb7-6" aria-hidden="true" tabindex="-1"></a>    mostOverlapsPlaylists_indices.append(songOverlaps.index(songOverlaps_sorted[x]))</span>
+<span id="cb7-7"><a href="#cb7-7" aria-hidden="true" tabindex="-1"></a>    songOverlaps[songOverlaps.index(songOverlaps_sorted[x])] <span class="op">=</span> <span class="dv">0</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<p>Collect all of the songs in the overlapping playlists and store them in <code>overlapsTrackResponse</code>.</p>
+<div class="sourceCode" id="cb8"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a>overlapsTrackResponse <span class="op">=</span> <span class="bu">list</span>()</span>
+<span id="cb8-2"><a href="#cb8-2" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> x <span class="kw">in</span> mostOverlapsPlaylists_indices:</span>
+<span id="cb8-3"><a href="#cb8-3" aria-hidden="true" tabindex="-1"></a>    <span class="cf">for</span> y <span class="kw">in</span> <span class="bu">range</span>(<span class="bu">len</span>(singleLayerTracksResponse[x])):</span>
+<span id="cb8-4"><a href="#cb8-4" aria-hidden="true" tabindex="-1"></a>        overlapsTrackResponse.append(singleLayerTracksResponse[x][y])</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<p>Check for duplicates in <code>overlapsTrackResponse</code> and if it is in at least <code>overlapThreshold</code> number of playlists, add that song ID to <code>mostOverlapsSongs</code>. We first convert <code>mostOverlapsSongs</code> to a <code>set</code> to remove duplicates and to a <code>list</code> again for easier manipulation.</p>
+<div class="sourceCode" id="cb9"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a>mostOverlapsSongs <span class="op">=</span> <span class="bu">list</span>()</span>
+<span id="cb9-2"><a href="#cb9-2" aria-hidden="true" tabindex="-1"></a>overlapThreshold <span class="op">=</span> <span class="dv">3</span></span>
+<span id="cb9-3"><a href="#cb9-3" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> x <span class="kw">in</span> overlapsTrackResponse:</span>
+<span id="cb9-4"><a href="#cb9-4" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> overlapsTrackResponse.count(x) <span class="op">&gt;=</span> overlapThreshold:  </span>
+<span id="cb9-5"><a href="#cb9-5" aria-hidden="true" tabindex="-1"></a>        mostOverlapsSongs.append(x)</span>
+<span id="cb9-6"><a href="#cb9-6" aria-hidden="true" tabindex="-1"></a>mostOverlapsSongs <span class="op">=</span> <span class="bu">set</span>(mostOverlapsSongs)</span>
+<span id="cb9-7"><a href="#cb9-7" aria-hidden="true" tabindex="-1"></a>mostOverlapsSongs <span class="op">=</span> <span class="bu">list</span>(mostOverlapsSongs)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<p>And lastly, the script will end the timer and store the elapsed time in minutes to <code>runtimePerMin</code> and create a playlist with song IDs in <code>mostOverlapsSongs</code>.</p>
+<div class="sourceCode" id="cb10"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb10-1"><a href="#cb10-1" aria-hidden="true" tabindex="-1"></a>end_time <span class="op">=</span> time.time()</span>
+<span id="cb10-2"><a href="#cb10-2" aria-hidden="true" tabindex="-1"></a>runtimePerMin <span class="op">=</span> <span class="bu">int</span>((end_time <span class="op">-</span> start_time)<span class="op">/</span><span class="dv">60</span>)</span>
+<span id="cb10-3"><a href="#cb10-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb10-4"><a href="#cb10-4" aria-hidden="true" tabindex="-1"></a>sp.user_playlist_create(username, name<span class="op">=</span><span class="st">"Overlapping Songs from Nearest </span><span class="sc">{}</span><span class="st"> Playlists for Query '</span><span class="sc">{}</span><span class="st">'"</span>.<span class="bu">format</span>(<span class="bu">len</span>(mostOverlapsPlaylists_indices), query), description<span class="op">=</span><span class="st">"Seed Playlists: </span><span class="sc">{}</span><span class="st"> - Run Time: </span><span class="sc">{}</span><span class="st"> Minutes - Overlap Threshold: </span><span class="sc">{}</span><span class="st"> - Liked Songs: "</span>.<span class="bu">format</span>((end_offset <span class="op">+</span> <span class="dv">50</span>), runtimePerMin, overlapThreshold))</span>
+<span id="cb10-5"><a href="#cb10-5" aria-hidden="true" tabindex="-1"></a>last_playlist <span class="op">=</span> sp.user_playlists(username, <span class="dv">1</span>, <span class="dv">0</span>)</span>
+<span id="cb10-6"><a href="#cb10-6" aria-hidden="true" tabindex="-1"></a>sp.playlist_add_items(last_playlist[<span class="st">"items"</span>][<span class="dv">0</span>][<span class="st">"id"</span>], mostOverlapsSongs[<span class="dv">0</span>:<span class="dv">100</span>])</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</section>
+<section id="results" class="level2">
+<h2 class="anchored" data-anchor-id="results">Results</h2>
+<p>The script created a playlist with recommended songs from a given query; now what? We have to measure its performance. The performance of the model has to be obviously based on the number of liked new songs from the generated playlist. Therefore, higher the <strong>number of seed playlists</strong> higher the probability of catching a playlist with high overlap right? We set <code>end_offset</code> to 10000 and hit enter. However, this would be both time consuming (<strong>Runtime</strong>) and put a heavy load on the Spotify API; thus, runs the risk of being rate limited. I’ve imagined the scenario that if I were to use this algorithm in the production, what would be my KPI and have settled on <strong>Number of New Likes per Minute</strong>.</p>
+<figure class="figure">
+<p align="center">
+<img src="images/comparison1.png" alt="mpg" width="600" height="600" class="figure-img">
+</p>
+</figure>
+<p>This graph shows <em>New Likes</em> and the <em>Number of Seed Playlists</em> in each experiment. All of the experiments used the same query for genre and I have listened to all of the songs in the playlists. While excluding the ones that are already in my library, I have counted the songs which I liked.</p>
+<figure class="figure">
+<p align="center">
+<img src="images/comparison2.png" alt="mpg" width="600" height="600" class="figure-img">
+</p>
+</figure>
+<p>This figure, on the other hand, shows the <em>Total Number of Songs in Each Playlist</em> and our KPI or <em>Number of New Likes per Minute</em> which is calculated by dividing new likes by runtime.</p>
+<p>From both of the graphs, we can see that after 200 seed playlists, there are diminishing returns. New likes stays constant of and consequently, KPI decreases. One could argue that Experiment No.&nbsp;2 has the highest KPI and therefore, it should be selected for the model. However, it generates low count of songs. I think a playlist with song count between 70 and 100 is better. Also greater seed has increased probability of finding more similar playlists.</p>
+</section>
+<section id="discussion" class="level2">
+<h2 class="anchored" data-anchor-id="discussion">Discussion</h2>
+<p>I think this was great learning experience for me and turned out nicer that I at first expected. Even though it doesn’t use any sophisticated algorithms, recommendations were mostly satisfying. It has to be said that the performance of my model depends a couple of variable, some of which I cannot control. For example, how much a user is invested in a genre is very important. If I have only 5 songs in my library for a target genre, my expectations would have to be low.</p>
+<p>There three main controlling variables that changes the outcome of playlists: <strong>number of seed playlists</strong>, <strong>how many of the most overlapping playlists we take into consideration</strong>, and <strong>overlap threshold</strong>. They control how many songs will be in the generated playlist and a high overlap threshold tends to favor more popular songs, obviously. I manually tinkered with them to make song count between 70 and 100 in my experiments but in the future maybe I can add an automation of this. <strong>For now thanks for reading and see you next time!</strong></p>
+
+
+</section>
+
+
+<div id="quarto-appendix" class="default"><section id="footnotes" class="footnotes footnotes-end-of-document" role="doc-endnotes"><h2 class="anchored quarto-appendix-heading">Footnotes</h2>
+
+<ol>
+<li id="fn1"><p><a href="https://en.wikipedia.org/wiki/Recommender_system#Multi-criteria_recommender_systems">Recommender System Entry on Wikipedia</a><a href="#fnref1" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn2"><p><a href="https://patents.google.com/patent/US7003515B1/en">Pandora Media LLC, “Consumer item matching method and system”, U.S. Patent US7003515B1, May 16, 2002”</a><a href="#fnref2" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn3"><p><a href="https://dl.acm.org/doi/pdf/10.1145/223904.223931">U. Shardanand, P. Maes, “Social Information Filtering: Algorithms for Automating”Word of Mouth”” in CHI ’95: Proceedings of the SIGCHI Conference on Human factors in Computing Systems (ACM Press/Addison-Wesley Publishing Co., New York, NY, 1995), pp.&nbsp;210–217</a><a href="#fnref3" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+</ol>
+</section></div></main> <!-- /main -->
+<script id="quarto-html-after-body" type="application/javascript">
+window.document.addEventListener("DOMContentLoaded", function (event) {
+  const toggleBodyColorMode = (bsSheetEl) => {
+    const mode = bsSheetEl.getAttribute("data-mode");
+    const bodyEl = window.document.querySelector("body");
+    if (mode === "dark") {
+      bodyEl.classList.add("quarto-dark");
+      bodyEl.classList.remove("quarto-light");
+    } else {
+      bodyEl.classList.add("quarto-light");
+      bodyEl.classList.remove("quarto-dark");
+    }
+  }
+  const toggleBodyColorPrimary = () => {
+    const bsSheetEl = window.document.querySelector("link#quarto-bootstrap");
+    if (bsSheetEl) {
+      toggleBodyColorMode(bsSheetEl);
+    }
+  }
+  toggleBodyColorPrimary();  
+  const icon = "";
+  const anchorJS = new window.AnchorJS();
+  anchorJS.options = {
+    placement: 'right',
+    icon: icon
+  };
+  anchorJS.add('.anchored');
+  const clipboard = new window.ClipboardJS('.code-copy-button', {
+    target: function(trigger) {
+      return trigger.previousElementSibling;
+    }
+  });
+  clipboard.on('success', function(e) {
+    // button target
+    const button = e.trigger;
+    // don't keep focus
+    button.blur();
+    // flash "checked"
+    button.classList.add('code-copy-button-checked');
+    var currentTitle = button.getAttribute("title");
+    button.setAttribute("title", "Copied!");
+    let tooltip;
+    if (window.bootstrap) {
+      button.setAttribute("data-bs-toggle", "tooltip");
+      button.setAttribute("data-bs-placement", "left");
+      button.setAttribute("data-bs-title", "Copied!");
+      tooltip = new bootstrap.Tooltip(button, 
+        { trigger: "manual", 
+          customClass: "code-copy-button-tooltip",
+          offset: [0, -8]});
+      tooltip.show();    
+    }
+    setTimeout(function() {
+      if (tooltip) {
+        tooltip.hide();
+        button.removeAttribute("data-bs-title");
+        button.removeAttribute("data-bs-toggle");
+        button.removeAttribute("data-bs-placement");
+      }
+      button.setAttribute("title", currentTitle);
+      button.classList.remove('code-copy-button-checked');
+    }, 1000);
+    // clear code selection
+    e.clearSelection();
+  });
+  function tippyHover(el, contentFn) {
+    const config = {
+      allowHTML: true,
+      content: contentFn,
+      maxWidth: 500,
+      delay: 100,
+      arrow: false,
+      appendTo: function(el) {
+          return el.parentElement;
+      },
+      interactive: true,
+      interactiveBorder: 10,
+      theme: 'quarto',
+      placement: 'bottom-start'
+    };
+    window.tippy(el, config); 
+  }
+  const noterefs = window.document.querySelectorAll('a[role="doc-noteref"]');
+  for (var i=0; i<noterefs.length; i++) {
+    const ref = noterefs[i];
+    tippyHover(ref, function() {
+      // use id or data attribute instead here
+      let href = ref.getAttribute('data-footnote-href') || ref.getAttribute('href');
+      try { href = new URL(href).hash; } catch {}
+      const id = href.replace(/^#\/?/, "");
+      const note = window.document.getElementById(id);
+      return note.innerHTML;
+    });
+  }
+  const findCites = (el) => {
+    const parentEl = el.parentElement;
+    if (parentEl) {
+      const cites = parentEl.dataset.cites;
+      if (cites) {
+        return {
+          el,
+          cites: cites.split(' ')
+        };
+      } else {
+        return findCites(el.parentElement)
+      }
+    } else {
+      return undefined;
+    }
+  };
+  var bibliorefs = window.document.querySelectorAll('a[role="doc-biblioref"]');
+  for (var i=0; i<bibliorefs.length; i++) {
+    const ref = bibliorefs[i];
+    const citeInfo = findCites(ref);
+    if (citeInfo) {
+      tippyHover(citeInfo.el, function() {
+        var popup = window.document.createElement('div');
+        citeInfo.cites.forEach(function(cite) {
+          var citeDiv = window.document.createElement('div');
+          citeDiv.classList.add('hanging-indent');
+          citeDiv.classList.add('csl-entry');
+          var biblioDiv = window.document.getElementById('ref-' + cite);
+          if (biblioDiv) {
+            citeDiv.innerHTML = biblioDiv.innerHTML;
+          }
+          popup.appendChild(citeDiv);
+        });
+        return popup.innerHTML;
+      });
+    }
+  }
+});
+</script>
+</div> <!-- /content -->
+
+
+
+</body></html>

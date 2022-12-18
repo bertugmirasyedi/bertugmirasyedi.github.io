@@ -1,0 +1,19 @@
+project:
+  type: website
+
+website:
+  title: "Data and Decisions"
+  navbar:
+    right:
+      - about.qmd
+      - icon: github
+        href: https://github.com/bertugmirasyedi
+      - icon: twitter
+        href: https://twitter.com/bertugmirasyedi
+format:
+  html:
+    theme: flatly
+    css: styles.css
+
+
+
