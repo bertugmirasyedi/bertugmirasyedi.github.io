@@ -2,8 +2,8 @@
   {
     "listing": "/index.html",
     "items": [
-      "/posts/book-forecasting/book_sales_forecasting.html",
       "/posts/book-forecasting/book_sales_forecasting_deep_learning_part.html",
+      "/posts/book-forecasting/book_sales_forecasting.html",
       "/posts/find-relevant-music/2020-01-05-find-relevant-music.html"
     ]
   }

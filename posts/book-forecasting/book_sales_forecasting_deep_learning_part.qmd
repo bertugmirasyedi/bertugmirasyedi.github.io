@@ -1,7 +1,7 @@
 ---
 title: "Book Sales Forecasting: Comparison of Different Models Part 2"
 description: "Deep Learning Models"
-date: 2022-11-27
+date: 2022-12-20
 image: "images/forecast.png"
 categories: [python, time series forecasting, tensorflow, optuna, hyperparameter tuning]
 execute: 
@@ -615,6 +615,8 @@ plot_forecasts(val_targets, rnn_forecast, title="Simple LSTM Model Forecasts");
 
 ```{python}
 #| echo: false
+print(f"Model Type of the Tuned RNN Model: {best_rnn_model_parameters['model_type']}\n")
+
 print(f"MAPE for Tuned RNN Model is: {mean_absolute_percentage_error(val_targets, rnn_forecast)}")
 print(f"R2 Score for Tuned RNN Model is: {r2_score(val_targets, rnn_forecast)}\n")
 
@@ -625,6 +627,7 @@ print(f"Total Cost for Tuned RNN Model is: €{rnn_model_total_cost:,.2f}")
 
 ```{python}
 #| echo: false
+import os
 tuning_results = {
   "STL ARIMA": 65375,
   "ARIMAX": 618358,
@@ -632,12 +635,14 @@ tuning_results = {
   "RNN Model": rnn_model_total_cost
 }
 
+os.environ["rnn_model_cost_str"] = "€{rnn_model_total_cost:,.2f}"
+
 tuning_results = sorted(tuning_results.items(), key=lambda x:x[1])
 best_model_name = tuning_results[0][0]
 best_model_cost = tuning_results[0][1]
 ```
 
-We have tuned all models and calculated the total costs in terms of our cost function and the winner is **XGBoost** with the total cost of **€61,498.00**! XGBoost's performance is not surprising given that it is usually the winning model for competitions but STL-ARIMA has also performed very successfully. RNN models were, for me, somewhat disappointing; however, it should be stated that we didn't fully utilized LSTM cells' memory because we have only used one timestep in the input. Increasing timesteps could potentially improve its performance. ARIMAX was the worst performer even with tuning. It could be because of the feature matrix that we have created couldn't fully capture seasonality and trend.
+We have tuned all models and calculated the total costs in terms of our cost function and the winner is **XGBoost**! XGBoost's performance is not surprising given that it is usually the winning model for competitions but STL-ARIMA has also performed very successfully. RNN models were, for me, somewhat disappointing; however, it should be stated that we didn't fully utilized LSTM cells' memory because we have only used one timestep in the input. Increasing timesteps could potentially improve its performance. ARIMAX was the worst performer even with tuning. It could be because of the feature matrix that we have created couldn't fully capture seasonality and trend.
 
 Even though we have added calendar features, they might not be enough to predict seasonality and trend. Therefore, a decomposition model where a model similar to STL decompose the time series to trend, seasonality, and residuals and after that a seperate regression model trained on only residuals could potentially be more accurate; but that's all for this post.
 

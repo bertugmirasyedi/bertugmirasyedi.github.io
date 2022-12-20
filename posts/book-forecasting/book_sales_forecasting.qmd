@@ -1,9 +1,9 @@
 ---
 title: "Book Sales Forecasting: Comparison of Different Models Part 1"
 description: "From Classical Statistical Models to XGBoost"
-date: 2022-11-27
+date: 2022-12-19
 image: "images/forecast.png"
-categories: [python, time series forecasting, xgboost, arima]
+categories: [python, time series forecasting, xgboost, arima, optuna, hyperparameter tuning]
 execute: 
   freeze: true
 jupyter: python3
@@ -1273,7 +1273,7 @@ plot_forecasts(val_targets_xgboost_tuned, forecast_xgboost_tuned, title="XGBoost
 print(f"MAPE for Earlier XGBoost model is: {mean_absolute_percentage_error(test_targets_xgboost, forecast_xgboost)}")
 print(f"MAPE for Tuned XGBoost model is: {mean_absolute_percentage_error(val_targets_xgboost_tuned, forecast_xgboost_tuned)}\n")
 
-print(f"R2 Score for Earlier XGBoost model is: {mean_absolute_percentage_error(test_targets_xgboost, forecast_xgboost)}")
+print(f"R2 Score for Earlier XGBoost model is: {r2_score(test_targets_xgboost, forecast_xgboost)}")
 print(f"R2 Score for Tuned XGBoost model is: {r2_score(val_targets_xgboost_tuned, forecast_xgboost_tuned)}\n")
 
 print(f"Total Cost for Tuned XGBoost model is: €{xgboost_total_cost:,.2f}")
