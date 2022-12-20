@@ -8,7 +8,7 @@
 
   <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
 
-  <meta name="dcterms.date" content="2022-11-27">
+  <meta name="dcterms.date" content="2022-12-20">
   <meta name="description" content="Deep Learning Models">
 
   <title>Data and Decisions - Book Sales Forecasting: Comparison of Different Models Part 2</title>
@@ -1147,7 +1147,8 @@ Total Cost for Tuned RNN Model is: €53,048.00</code></pre>
           successfully. RNN models were, for me, somewhat disappointing; however, it should be stated that we didn’t
           fully utilized LSTM cells’ memory because we have only used one timestep in the input. Increasing timesteps
           could potentially improve its performance. ARIMAX was the worst performer even with tuning. It could be
-          because of the feature matrix that we have created couldn’t fully capture seasonality and trend.</p>
+          because of the feature matrix that we have created couldn’t fully capture seasonality and trend.
+        </p>
         <p>Even though we have added calendar features, they might not be enough to predict seasonality and trend.
           Therefore, a decomposition model where a model similar to STL decompose the time series to trend, seasonality,
           and residuals and after that a seperate regression model trained on only residuals could potentially be more
