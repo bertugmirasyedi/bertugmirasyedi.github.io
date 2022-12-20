@@ -1,5 +1,6 @@
 project:
   type: website
+  output-dir: docs
 
 website:
   title: "Data and Decisions"
@@ -14,6 +15,3 @@ format:
   html:
     theme: flatly
     css: styles.css
-
-
-
